@@ -79,34 +79,6 @@ class Card():
 		return self.number
 
 
-class Bags():
-
-	def __init__(self, team):
-		self.bags = 0
-		self.team = team
-
-	def get_bags(self):
-		if self.team.made_bid():
-			self.bags = self.team.tricks - self.team.bid
-		else:
-			self.bags = 0
-		return self.bags
-
-	def raw_bid_count(self):
-		old_bags = self.bags
-		self.bags = old_bags + self.get_bags()
-	
-	def update_bags(self, board):
-		self.bags = self.bags % 10
-		if self.team.number == 1:
-			board.team1_bags = self.bags
-		else:
-			board.team2_bags = self.bags
-
-	def has_gone_over(self):
-		return self.raw_bid_count >= 10
-
-
 
 class Deck():
 	def __init__(self):
@@ -183,6 +155,36 @@ class Hand():
 	def __iter__(self):
 		return self.hand.__iter__()
 
+class Bags():
+
+	def __init__(self, team):
+		self.bags = 0
+		self.team = team
+
+	def __str__(self):
+		return str(self.bags)
+
+	def get_bags(self):
+		if self.team.made_bid():
+			self.bags = self.team.trick - self.team.bid
+		else:
+			self.bags = 0
+		return self.bags
+
+	def raw_bid_count(self):
+		old_bags = self.bags
+		self.bags = old_bags + self.get_bags()
+	
+	def update_bags(self, board):
+		self.bags = self.bags % 10
+		if self.team.number == 1:
+			board.team1_bags = self.bags
+		else:
+			board.team2_bags = self.bags
+
+	def has_gone_over(self):
+		self.raw_bid_count()
+		return self.bags >= 10
 
 
 class Trick():
@@ -300,8 +302,6 @@ class Player():
 
 
 
-
-
 class ComputerPlayer(Player):
 	def __init__(self, seat):
 		self.seat = seat
@@ -310,6 +310,7 @@ class ComputerPlayer(Player):
 		self.bid = 0
 		self.trick = 0
 		self.is_human = False
+		self.played_cards = []
 
 	def update_hand(self, hand):
 		self.hand = hand
@@ -329,8 +330,8 @@ class ComputerPlayer(Player):
 		for card in self.hand:
 			if card.suit == 'S':
 				self.bid += 1
-		if bid == 0:
-			self.bid += 1
+		# if bid == 0:
+		# 	self.bid += 1
 			# elif card.number == 'A':
 			# 	self.bid += 1
 			# elif card.number == 'K':
@@ -372,10 +373,16 @@ class ComputerPlayer(Player):
 			board.card_east = card
 
 	def won_trick(self, card):
-		return card in self.hand
+		return card in self.played_cards
 
 	def display_win(self, card):
 		print("{} won the trick by playing the {}. ".format(self, card))
+
+	def update_played_cards(self, card):
+		self.played_cards.append(card)
+
+	def clear_played_cards(self):
+		self.played_cards = []
 
 	def  __str__(self):
 		if self.seat == 0:
@@ -387,8 +394,9 @@ class ComputerPlayer(Player):
 
 
 class Score():
-	def __init__(self, team):
+	def __init__(self, team, bags):
 		self.score = 0
+		self.bags = bags
 		self.team = team
 
 	def __str__(self):
@@ -406,7 +414,7 @@ class Score():
 		else:
 			team_score -= (self.team.bid * 10)
 
-		if self.team.bags.has_gone_over():
+		if self.bags.has_gone_over():
 			team_score -= 100
 
 		self.score = team_score
@@ -430,7 +438,6 @@ class Team():
 		self.player_2 = player_2
 		self.bid = 0
 		self.trick = 0
-		self.bags = 0
 
 	def get_bid(self):
 		team_bid = int(self.player_1.bid) + int(self.player_2.bid)
@@ -457,7 +464,12 @@ class Team():
 	def update_trick(self):
 		self.trick = self.get_trick_count()
 
-		
+	def update_bags(self, bags, board):
+		if self.number == 1:
+			board.team1_bags = bags
+		else:
+			board.team2_bags = bags
+	
 
 class Board():
 
@@ -534,18 +546,21 @@ class Game():
 	
 	def __init__(self, score_limit=250):
 		self.deck = Deck()
-		self.players = [ComputerPlayer(0), ComputerPlayer(1), Player(2, True), ComputerPlayer(3)]
-		self.current_starting_player_seat = 0
+		self.players = [ComputerPlayer(0), ComputerPlayer(1), Player(2), ComputerPlayer(3)]
+		self.starting_player_seat = 0
 		self.current_player_seat = 0
 		self.board = Board()
 		self.trick = Trick()
 		self.score_limit = score_limit
 		self.team_1 = Team(self.players[0], self.players[2], 1)
 		self.team_2 = Team(self.players[1], self.players[3], 2)
-		self.team_1_score = Score(self.team_1)
-		self.team_2_score = Score(self.team_2)
+
 		self.team_1_bags = Bags(self.team_1)
-		self.team_2_bags = Bags(self.team_2)
+		self.team_2_bags = Bags(self.team_2)		
+		
+		self.team_1_score = Score(self.team_1, self.team_1_bags)
+		self.team_2_score = Score(self.team_2, self.team_2_bags)
+
 		old_team_1_score = 0
 		old_team_2_score = 0
 		self.players[0].make_starting_player()
@@ -554,215 +569,109 @@ class Game():
 		while self.board.score < self.score_limit:
 			count = 13
 			self.deck.shuffle()
-			self.players[0].update_hand(Hand(self.deck, 0, 13), self.board)
+			self.players[0].update_hand(Hand(self.deck, 0, 13))
 			self.players[1].update_hand(Hand(self.deck, 13, 26))
-			self.players[2].update_hand(Hand(self.deck, 26, 39))
+			self.players[2].update_hand(Hand(self.deck, 26, 39), self.board)
 			self.players[3].update_hand(Hand(self.deck, 39, 52))
 			self.board.display()
-			
-			for player in self.players:
-				if self.players
-			self.players[0].get_bid()
-			self.players[0].update_bid(self.players[0].bid, self.board)
-			self.board.display()
-			
-			self.players[1].get_bid()
-			self.players[1].update_bid(self.players[1].bid, self.board)
-			self.board.display()
-			
+
 			self.determine_bid(0)
 			self.determine_bid(1)
 
-			player_bid = self.players[2].get_bid()
-			self.players[2].update_bid(player_bid, self.board)
+			human_bid = self.players[2].get_bid()
+			self.players[2].update_bid(human_bid, self.board)
 			self.board.display()
 
 			self.determine_bid(3)
 
-			self.players[3].get_bid()
-			self.players[3].update_bid(self.players[3].bid, self.board)
-			self.board.display()
-
 			while count > 0:
-				current_player = self.players[self.starting_player_seat]
+				starting_player = self.players[self.starting_player_seat]
 				#starting player moves
+				
+				if starting_player.is_human:
+					while True: 
+						human_move = self.players[2].get_move()
+						if starting_player.is_legal_move(human_move):
+							starting_suit = human_move.get_suit()
+							starting_player.play_card(human_move, self.board)
+							self.trick.update_trick(human_move)
+							starting_player.hand.remove_card(human_move)
+							starting_player.make_not_starting_player()
+							self.board.display()
+							break
+						else:
+							print("You must play a card in the starting suit, if you have it. ")
+				else:
+					starting_player_move = starting_player.get_move()
+					starting_suit = starting_player_move.get_suit()
+						
+					starting_player.play_card(starting_player_move, self.board)
+					self.trick.update_trick(starting_player_move)
+					starting_player.hand.remove_card(starting_player_move)
+					starting_player.update_played_cards(starting_player_move)
+					starting_player.make_not_starting_player()
+
+					self.board.display()
 
 				cards_played = 1
-				while cards_played < 5:
+			
+
+
+				while cards_played < 4:
 					self.current_player_seat = (self.current_player_seat + 1) % 4
 					current_player = self.players[self.current_player_seat]
 
-					if current_player.is_player():
-						...
+					if current_player.is_human:
+						while True: 
+							human_move = current_player.get_move()
+							if current_player.is_legal_move(human_move, starting_suit):
+								current_player.play_card(human_move, self.board)
+								self.trick.update_trick(human_move)
+								current_player.hand.remove_card(human_move)
+								self.board.display()
+								break
+							else:
+								print("You must play a card in the starting suit, if you have it. ")
 					else:
-						...
+						current_player_move = current_player.get_move(starting_suit)
+						current_player.play_card(current_player_move, self.board)
+						self.trick.update_trick(current_player_move)
+						current_player.hand.remove_card(current_player_move)
+						current_player.update_played_cards(current_player_move)
+						self.board.display()
 
 					cards_played += 1
-
-
-
-
-
-
-
-				if self.c1.is_starting:
-					c1_move = self.c1.get_move()
-					starting_suit = c1_move.get_suit()
-					
-					self.c1.play_card(c1_move, self.board)
-					self.trick.update_trick(c1_move)
-					self.board.display()
-					self.c1.make_not_starting_player()
-
-					c2_move = self.c2.get_move(starting_suit)
-					self.c2.play_card(c2_move, self.board)
-					self.trick.update_trick(c2_move)
-					self.board.display()
-
-					while True:
-						player_move = self.player.get_move()
-						if self.player.is_legal_move(player_move, starting_suit):
-							self.player.play_card(player_move, self.board)
-							self.trick.update_trick(player_move)
-							self.player.hand.remove_card(player_move)
-							self.board.display()
-							break
-						else:
-							print("You must play a card in the starting suit, if you have it. ")
-							
-
-					c4_move = self.c4.get_move(starting_suit)
-					self.c4.play_card(c4_move, self.board)
-					self.trick.update_trick(c4_move)
-					self.board.display()
-
-				elif self.c2.is_starting:
-					c2_move = self.c2.get_move()
-					starting_suit = c2_move.get_suit()
-					
-					self.c2.play_card(c2_move, self.board)
-					self.trick.update_trick(c2_move)
-					self.board.display()
-					self.c2.make_not_starting_player()
-
-					while True: 
-						player_move = self.player.get_move()
-						if self.player.is_legal_move(player_move, starting_suit):
-							self.player.play_card(player_move, self.board)
-							self.trick.update_trick(player_move)
-							self.player.hand.remove_card(player_move)
-							self.board.display()
-							break
-						else:
-							print("You must play a card in the starting suit, if you have it. ")
-
-					c4_move = self.c4.get_move(starting_suit)
-					self.c4.play_card(c4_move, self.board)
-					self.trick.update_trick(c4_move)
-					self.board.display()
-
-					c1_move = self.c1.get_move(starting_suit)
-					self.c1.play_card(c1_move, self.board)
-					self.trick.update_trick(c1_move)
-					self.board.display()
-
-
-				elif self.player.is_starting:
-					while True: 
-						player_move = self.player.get_move()
-						if self.player.is_legal_move(player_move):
-							starting_suit = player_move.get_suit()
-							self.player.play_card(player_move, self.board)
-							self.trick.update_trick(player_move)
-							self.player.hand.remove_card(player_move)
-							self.board.display()
-							self.player.make_not_starting_player()
-							break
-						else:
-							print("You must play a card in the starting suit, if you have it. ")
-
-					c4_move = self.c4.get_move(starting_suit)
-					self.c4.play_card(c4_move, self.board)
-					self.trick.update_trick(c4_move)
-					self.board.display()
-
-					c1_move = self.c1.get_move(starting_suit)
-					self.c1.play_card(c1_move, self.board)
-					self.trick.update_trick(c1_move)
-					self.board.display()
-
-					c2_move = self.c2.get_move(starting_suit)
-					self.c2.play_card(c2_move, self.board)
-					self.trick.update_trick(c2_move)
-					self.board.display()
-
-
-				elif self.c4.is_starting:
-					c4_move = self.c4.get_move()
-					starting_suit = c4_move.get_suit()
-					self.c4.play_card(c4_move, self.board)
-					self.trick.update_trick(c4_move)
-					self.board.display()
-					self.c4.make_not_starting_player()
-
-					c1_move = self.c1.get_move(starting_suit)
-					self.c1.play_card(c1_move, self.board)
-					self.trick.update_trick(c1_move)
-					self.board.display()
-
-					c2_move = self.c2.get_move(starting_suit)
-					self.c2.play_card(c2_move, self.board)
-					self.trick.update_trick(c2_move)
-					self.board.display()
-
-					while True:
-						player_move = self.player.get_move()
-						if self.player.is_legal_move(player_move, starting_suit):
-							self.player.play_card(player_move, self.board)
-							self.trick.update_trick(player_move)
-							self.player.hand.remove_card(player_move)
-							self.board.display()
-							break
-						else:
-							print("You must play a card in the starting suit, if you have it. ")
 
 				
 				winning_card = self.trick.get_winning_card(starting_suit)
 
-				if self.c1.won_trick(winning_card):
-					self.c1.increase_trick_count(self.board)
-					self.c1.make_starting_player()
-					self.c1.display_win(winning_card)
-					input("<<PRESS ENTER>>")
+				if self.players[0].won_trick(winning_card):
+					self.determine_trick_winner(0, winning_card)
+					
+				elif self.players[1].won_trick(winning_card):
+					self.determine_trick_winner(1, winning_card)
 
-				elif self.c2.won_trick(winning_card):
-					self.c2.increase_trick_count(self.board)
-					self.c2.display_win(winning_card)
-					input("<<PRESS ENTER>>")
-					self.c2.make_starting_player()
 
-				elif self.c4.won_trick(winning_card):
-					self.c4.display_win(winning_card)
-					input("<<PRESS ENTER>>")
-					self.c4.increase_trick_count(self.board)
-					self.c4.make_starting_player()
+				elif self.players[3].won_trick(winning_card):
+					self.determine_trick_winner(3, winning_card)
 
 				else:
-					self.player.increase_trick_count(self.board)
-					self.player.make_starting_player()
-					self.player.display_win(winning_card)
-					input("<<PRESS ENTER>>")
+					self.determine_trick_winner(2, winning_card)	
 					self.board.clear_cards()
-					self.board.display()
+					self.board.display()	
+				
+				self.players[0].clear_played_cards()
+				self.players[1].clear_played_cards()
+				self.players[3].clear_played_cards()
 
-				self.c1.hand.remove_card(c1_move)
-				self.c2.hand.remove_card(c2_move)
-				self.c4.hand.remove_card(c4_move)
 				self.trick.clear_tricks()
 				self.board.clear_cards()
 				count -= 1
 
+
+
 			print("ROUND OVER")
+
 			self.team_1.update_bid()
 			self.team_1.get_trick_count()
 			self.team_1.update_trick()
@@ -779,7 +688,11 @@ class Game():
 			
 			round_score_team_1 = new_team_1_score - old_team_1_score
 			round_score_team_2 = new_team_2_score - old_team_2_score
-			print('Team 1 scored {} points. Team 2 scored {} points '.format(round_score_team_1, round_score_team_2))
+			self.team_1_bags.update_bags(self.board)
+			self.team_2_bags.update_bags(self.board)
+
+			print('Team 1 made {} points this round and now has a total of {} bags. \nTeam 2 made {} points this round and now has a total {} bags. '
+				.format(round_score_team_1, self.team_1_bags, round_score_team_2, self.team_2_bags))
 			self.board.display()
 			
 			if ((self.team_1_score.has_winning_score(self.score_limit)) and 
@@ -795,28 +708,35 @@ class Game():
 
 			old_team_1_score = new_team_1_score
 			old_team_2_score = new_team_2_score
-			
-			self.c1.reset_bid_and_trick()
-			self.c1.update_trick_count(self.board)
-			self.c1.update_bid(self.c1.bid, self.board)
-			
-			self.c2.reset_bid_and_trick()
-			self.c2.update_trick_count(self.board)
-			self.c2.update_bid(self.c2.bid, self.board)
-			
-			self.c4.reset_bid_and_trick()
-			self.c4.update_trick_count(self.board)
-			self.c4.update_bid(self.c4.bid, self.board)
-			
-			self.player.reset_bid_and_trick()
-			self.player.update_trick_count(self.board)
-			self.player.update_bid(self.player.bid, self.board)
+
+			self.update_player_counters(0)
+			self.update_player_counters(1)
+			self.update_player_counters(2)
+			self.update_player_counters(3)
 
 			self.board.update_round_count()
 
 
 		print("GAME OVER")
 
+	def determine_bid(self, seat):
+		self.players[seat].get_bid()
+		self.players[seat].update_bid
+		self.players[seat].update_bid(self.players[seat].bid, self.board)
+		self.board.display()
+	
+	def determine_trick_winner(self, seat, winning_card):
+		self.players[seat].increase_trick_count(self.board)
+		self.players[seat].make_starting_player()
+		self.players[seat].display_win(winning_card)
+		self.starting_player_seat = self.players[seat].seat
+		self.current_player_seat = self.starting_player_seat
+		input("<<PRESS ENTER>>")
+
+	def update_player_counters(self, seat):	
+		self.players[seat].reset_bid_and_trick()
+		self.players[seat].update_trick_count(self.board)
+		self.players[seat].update_bid(self.players[seat].bid, self.board)
 
 display_instructions()
 input("Press Enter to get start game. ")

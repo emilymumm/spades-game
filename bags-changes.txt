@@ -1,0 +1,271 @@
+15a16
+> 
+80a82,110
+> class Bags():
+> 
+> 	def __init__(self, team):
+> 		self.bags = 0
+> 		self.team = team
+> 
+> 	def get_bags(self):
+> 		if self.team.made_bid():
+> 			self.bags = self.team.tricks - self.team.bid
+> 		else:
+> 			self.bags = 0
+> 		return self.bags
+> 
+> 	def raw_bid_count(self):
+> 		old_bags = self.bags
+> 		self.bags = old_bags + self.get_bags()
+> 	
+> 	def update_bags(self, board):
+> 		self.bags = self.bags % 10
+> 		if self.team.number == 1:
+> 			board.team1_bags = self.bags
+> 		else:
+> 			board.team2_bags = self.bags
+> 
+> 	def has_gone_over(self):
+> 		return self.raw_bid_count >= 10
+> 
+> 
+> 
+156,185d185
+< class Bags():
+< 
+< 	def __init__(self, team):
+< 		self.bags = 0
+< 		self.team = team
+< 
+< 	def __str__(self):
+< 		return str(self.bags)
+< 
+< 	def get_bags(self):
+< 		if self.team.made_bid():
+< 			self.bags = self.team.trick - self.team.bid
+< 		else:
+< 			self.bags = 0
+< 		return self.bags
+< 
+< 	def raw_bid_count(self):
+< 		old_bags = self.bags
+< 		self.bags = old_bags + self.get_bags()
+< 	
+< 	def update_bags(self, board):
+< 		self.bags = self.bags % 10
+< 		if self.team.number == 1:
+< 			board.team1_bags = self.bags
+< 		else:
+< 			board.team2_bags = self.bags
+< 
+< 	def has_gone_over(self):
+< 		self.raw_bid_count()
+< 		return self.bags >= 10
+223c223
+< 	def __init__(self):
+---
+> 	def __init__(self, seat):
+227a228,229
+> 		self.seat = seat
+> 		self.is_human = True
+235a238,240
+> 	def is_human_player(self): 
+> 		return self.is_human
+> 
+306a312
+> 		self.is_human = False
+326,327c332,333
+< 		# if bid == 0:
+< 		# 	self.bid += 1
+---
+> 		if bid == 0:
+> 			self.bid += 1
+336c342
+< 		if self.seat == 'north':
+---
+> 		if self.seat == 0:
+338c344
+< 		elif self.seat == 'west':
+---
+> 		elif self.seat == 3:
+340c346
+< 		elif self.seat == 'east':
+---
+> 		elif self.seat == 1:
+344c350
+< 		if self.seat == 'north':
+---
+> 		if self.seat == 0:
+346c352
+< 		elif self.seat == 'west':
+---
+> 		elif self.seat == 3:
+348c354
+< 		elif self.seat == 'east':
+---
+> 		elif self.seat == 1:
+353c359
+< 		if self.seat == 'north':
+---
+> 		if self.seat == 0:
+355c361
+< 		elif self.seat == 'west':
+---
+> 		elif self.seat == 3:
+357c363
+< 		elif self.seat == 'east':
+---
+> 		elif self.seat == 1 :
+361c367
+< 		if self.seat == 'north':
+---
+> 		if self.seat == 0:
+363c369
+< 		elif self.seat == 'west':
+---
+> 		elif self.seat == 3:
+365c371
+< 		elif self.seat == 'east':
+---
+> 		elif self.seat == 1:
+375c381
+< 		if self.seat == 'north':
+---
+> 		if self.seat == 0:
+377c383
+< 		elif self.seat == 'west':
+---
+> 		elif self.seat == 3:
+379c385
+< 		elif self.seat == 'east':
+---
+> 		elif self.seat == 1:
+384c390
+< 	def __init__(self, team, bags):
+---
+> 	def __init__(self, team):
+386d391
+< 		self.bags = bags
+402,404c407,409
+< 			team_score -= (self.team.bid * 10)	
+< 		
+< 		if self.bags.has_gone_over():
+---
+> 			team_score -= (self.team.bid * 10)
+> 
+> 		if self.team.bags.has_gone_over():
+455,460d459
+< 	def update_bags(self, bags, board):
+< 		if self.number == 1:
+< 			board.team1_bags = bags
+< 		else:
+< 			board.team2_bags = bags
+< 
+538,541c537,539
+< 		self.c1 = ComputerPlayer("north")
+< 		self.c2 = ComputerPlayer('east')
+< 		self.c4 = ComputerPlayer('west')
+< 		self.player = Player()
+---
+> 		self.players = [ComputerPlayer(0), ComputerPlayer(1), Player(2, True), ComputerPlayer(3)]
+> 		self.current_starting_player_seat = 0
+> 		self.current_player_seat = 0
+544d541
+< 		self.c1.make_starting_player()
+546,549c543,546
+< 		self.team_1 = Team(self.c1, self.player, 1)
+< 		self.team_2 = Team(self.c2, self.c4, 2)
+< 		
+< 		
+---
+> 		self.team_1 = Team(self.players[0], self.players[2], 1)
+> 		self.team_2 = Team(self.players[1], self.players[3], 2)
+> 		self.team_1_score = Score(self.team_1)
+> 		self.team_2_score = Score(self.team_2)
+552,555d548
+< 		
+< 		self.team_1_score = Score(self.team_1, self.team_1_bags)
+< 		self.team_2_score = Score(self.team_2, self.team_2_bags)
+< 		
+557a551
+> 		self.players[0].make_starting_player()
+559c553
+< 		
+---
+> 
+563,566c557,560
+< 			self.player.update_hand(Hand(self.deck, 0, 13), self.board)
+< 			self.c1.update_hand(Hand(self.deck, 13, 26))
+< 			self.c2.update_hand(Hand(self.deck, 26, 39))
+< 			self.c4.update_hand(Hand(self.deck, 39, 52))
+---
+> 			self.players[0].update_hand(Hand(self.deck, 0, 13), self.board)
+> 			self.players[1].update_hand(Hand(self.deck, 13, 26))
+> 			self.players[2].update_hand(Hand(self.deck, 26, 39))
+> 			self.players[3].update_hand(Hand(self.deck, 39, 52))
+568,570c562,566
+< 
+< 			self.c1.get_bid()
+< 			self.c1.update_bid(self.c1.bid, self.board)
+---
+> 			
+> 			for player in self.players:
+> 				if self.players
+> 			self.players[0].get_bid()
+> 			self.players[0].update_bid(self.players[0].bid, self.board)
+573,574c569,570
+< 			self.c2.get_bid()
+< 			self.c2.update_bid(self.c2.bid, self.board)
+---
+> 			self.players[1].get_bid()
+> 			self.players[1].update_bid(self.players[1].bid, self.board)
+577,578c573,577
+< 			player_bid = self.player.get_bid()
+< 			self.player.update_bid(player_bid, self.board)
+---
+> 			self.determine_bid(0)
+> 			self.determine_bid(1)
+> 
+> 			player_bid = self.players[2].get_bid()
+> 			self.players[2].update_bid(player_bid, self.board)
+581,582c580,583
+< 			self.c4.get_bid()
+< 			self.c4.update_bid(self.c4.bid, self.board)
+---
+> 			self.determine_bid(3)
+> 
+> 			self.players[3].get_bid()
+> 			self.players[3].update_bid(self.players[3].bid, self.board)
+585a587,607
+> 				current_player = self.players[self.starting_player_seat]
+> 				#starting player moves
+> 
+> 				cards_played = 1
+> 				while cards_played < 5:
+> 					self.current_player_seat = (self.current_player_seat + 1) % 4
+> 					current_player = self.players[self.current_player_seat]
+> 
+> 					if current_player.is_player():
+> 						...
+> 					else:
+> 						...
+> 
+> 					cards_played += 1
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+752,754d773
+< 			# self.team_1_bags.get_bags()
+< 			# self.team_2_bags.get_bags()
+< 
+763,766c782
+< 			self.team_1_bags.update_bags(self.board)
+< 			self.team_2_bags.update_bags(self.board)
+< 			print('Team 1 scored {} points and gained {} bags. Team 2 scored {} points and gained {} bags. '
+< 				.format(round_score_team_1, self.team_1_bags, round_score_team_2, self.team_2_bags))
+---
+> 			print('Team 1 scored {} points. Team 2 scored {} points '.format(round_score_team_1, round_score_team_2))

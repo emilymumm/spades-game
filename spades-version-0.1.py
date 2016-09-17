@@ -425,7 +425,6 @@ class Team():
 		self.player_2 = player_2
 		self.bid = 0
 		self.trick = 0
-		self.bags = 0
 
 	def get_bid(self):
 		team_bid = int(self.player_1.bid) + int(self.player_2.bid)
@@ -748,9 +747,6 @@ class Game():
 			self.team_2.update_bid()
 			self.team_2.get_trick_count()
 			self.team_2.update_trick()
-
-			# self.team_1_bags.get_bags()
-			# self.team_2_bags.get_bags()
 
 			new_team_1_score = self.team_1_score.get_score()
 			self.team_1_score.update_score(self.board)
