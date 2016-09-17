@@ -2,6 +2,7 @@
 
 import random
 import time
+import os
 
 SPADES = u'\u2660'
 CLUBS = u'\u2663'
@@ -505,12 +506,13 @@ class Board():
 		self.score = 0
 
 	def display(self):
+		os.system("clear")
 		print( 
 	"""
 	\t\tRound:{}      --Team 1--         --Team 2--
 	       \t\t\t  Score:{} Bags:{}     Score:{} Bags:{}
 						
-						PLAYER 1
+					   	PLAYER 1
 						Bid: {}
 						Tricks: {}
 
@@ -520,7 +522,7 @@ class Board():
 \t\t\t\tTricks: {}\t\t\tTricks: {}
 						    {}
 
-						PLAYER 3
+					 	PLAYER 3
 						Bid: {}
 						Tricks: {}
 
