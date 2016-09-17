@@ -747,9 +747,19 @@ class Game():
 		self.players[seat].update_bid(self.players[seat].bid, self.board)
 
 display_instructions()
+
+score = 250
+score_raw = input("What score do you want to play to? [250]  ")
+if score_raw != "":
+	try:
+		score = int(score_raw)
+	except:
+		None
+
+print("Playing to {}. ".format(score))
 input("Press Enter to get start game. ")
 
-g = Game(250)
+g = Game(score)
 
 
 
