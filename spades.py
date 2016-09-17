@@ -51,7 +51,10 @@ class Card():
 	@staticmethod
 	def from_code(raw_code):
 		code = raw_code.upper()
-		return Card(code[-1], code[0:-1])
+		if code[-1] not in SUITS or code[0:-1] not in CARD_NUMBERS:
+			raise ValueError()
+		else:
+			return Card(code[-1], code[0:-1])
 
 	def __str__(self):
 		if self.suit == 'S':	
@@ -284,6 +287,8 @@ class Player():
 				move = Card.from_code(code)
 				break
 			except IndexError:
+				print("Opps! A card is the number followed by first letter of its suit. ")
+			except ValueError:
 				print("Opps! A card is the number followed by first letter of its suit. ")
 		return move
 
@@ -740,6 +745,7 @@ class Game():
 
 display_instructions()
 input("Press Enter to get start game. ")
+
 g = Game(250)
 
 
