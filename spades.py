@@ -27,6 +27,7 @@ def generate_all_cards():
 
 
 def display_instructions():
+	os.system("clear")
 	print("""
 
 	\t\t\t -----------------------
@@ -700,8 +701,10 @@ class Game():
 
 			print('Team 1 made {} points this round and now has a total of {} bags. \nTeam 2 made {} points this round and now has a total {} bags. '
 				.format(round_score_team_1, self.team_1_bags, round_score_team_2, self.team_2_bags))
-			self.board.display()
 			
+			input("<<PRESS ENTER>>")
+			self.board.display()
+
 			if ((self.team_1_score.has_winning_score(self.score_limit)) and 
 				(self.team_1_score.score > self.team_2_score.score)):
 				print("Team 1 wins! ")
@@ -710,8 +713,6 @@ class Game():
 				(self.team_2_score.score > self.team_1_score.score)):
 				print("Team 2 wins! ")
 				break
-
-			input("<<PRESS ENTER>>")
 
 			old_team_1_score = new_team_1_score
 			old_team_2_score = new_team_2_score
