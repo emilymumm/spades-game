@@ -176,7 +176,7 @@ class Bags():
 			self.bags = 0
 		return self.bags
 
-	def raw_bid_count(self):
+	def update_raw_bid_count(self):
 		old_bags = self.bags
 		self.bags = old_bags + self.get_bags()
 	
@@ -188,7 +188,7 @@ class Bags():
 			board.team2_bags = self.bags
 
 	def has_gone_over(self):
-		self.raw_bid_count()
+		self.update_raw_bid_count()
 		return self.bags >= 10
 
 
@@ -253,7 +253,6 @@ class Player():
 
 	def make_not_starting_player(self):
 		self.is_starting = False
-
 
 	def update_hand(self, hand, board):
 		self.hand = hand
